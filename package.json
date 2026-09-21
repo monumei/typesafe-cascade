@@ -1,0 +1,18 @@
+{
+  "name": "typesafe-cascade",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "System 1 (Jev/TypeSafe) -> System 2 (Reasoning LLM) Cascade Pattern in TypeScript",
+  "scripts": {
+    "start": "bun run src/demo.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@typesafe-ai/sdk": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.7.0"
+  }
+}
