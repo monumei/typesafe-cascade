@@ -1,18 +1,25 @@
 {
   "name": "typesafe-cascade",
   "version": "1.0.0",
+  "description": "Typed System 1 → System 2 cascade: answer with TypeSafe Jev when it is confident, escalate to a reasoning model when it is not.",
+  "license": "MIT",
+  "private": true,
   "type": "module",
-  "description": "System 1 (Jev/TypeSafe) -> System 2 (Reasoning LLM) Cascade Pattern in TypeScript",
+  "main": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monumei/typesafe-cascade"
+  },
+  "packageManager": "bun@1.4.4",
   "scripts": {
     "start": "bun run src/demo.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun check"
   },
   "dependencies": {
-    "@typesafe-ai/sdk": "^0.6.0"
+    "@typesafe-ai/sdk": "^0.7.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.0",
-    "typescript": "^5.7.0"
+    "@types/bun": "^1.4.4"
   }
 }
