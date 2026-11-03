@@ -21,9 +21,12 @@
     "eval:sample": "bun eval/fetch.ts --refresh"
   },
   "dependencies": {
-    "@typesafe-ai/sdk": "^0.7.0"
+    "@typesafe-ai/sdk": "0.7.0"
   },
   "devDependencies": {
     "@types/bun": "^1.4.4"
+  },
+  "patchedDependencies": {
+    "@typesafe-ai/sdk@0.7.0": "patches/@typesafe-ai%2Fsdk@0.7.0.patch"
   }
 }

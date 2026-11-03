@@ -1,0 +1,28 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index e3d1a973b78737d26f126b70e535c50d54736b3b..cc0b50b18c4a1d72a44043adc69b7576c498f548 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -822,7 +822,8 @@ const mergeHeaders = (...sources) => {
+ const bufferResponse = async (response, signal) => {
+ 	const reader = response.clone().body?.getReader();
+ 	if (!reader) return;
+-	const original = response.body?.getReader();
++	// Bun marks a body used once any reader is taken, even after releaseLock, so leave the original untouched.
++	const original = void 0;
+ 	const cancel = () => {
+ 		reader.cancel(signal.reason).catch(() => {});
+ 		original?.cancel(signal.reason).catch(() => {});
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 7c66a8754e854ab5f554c6157431724b1557d998..5e76c8ea7f17bd2547bfefb2f53a3d69355c1971 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -821,7 +821,8 @@ const mergeHeaders = (...sources) => {
+ const bufferResponse = async (response, signal) => {
+ 	const reader = response.clone().body?.getReader();
+ 	if (!reader) return;
+-	const original = response.body?.getReader();
++	// Bun marks a body used once any reader is taken, even after releaseLock, so leave the original untouched.
++	const original = void 0;
+ 	const cancel = () => {
+ 		reader.cancel(signal.reason).catch(() => {});
+ 		original?.cancel(signal.reason).catch(() => {});

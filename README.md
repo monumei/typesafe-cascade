@@ -57,6 +57,7 @@ The label type comes from the keys of `criteria`, so a typo in a label fails at 
 - On timeout I abort System 1's `AbortSignal`, so the in-flight Jev request actually gets cancelled instead of left running.
 - If System 2 throws, `classify` rejects with that error. It won't loop back and call System 2 again.
 - `confidence` on the result is always Jev's number, and it's `0` when Jev never answered. System 2 doesn't report one.
+- `@typesafe-ai/sdk` 0.7.0 throws `Body already used` on every call under Bun, because `bufferResponse` takes a reader on the original response body. `patches/` carries a one-line fix that `bun install` applies, which is why the SDK version is pinned exactly.
 - `createTypeSafeSystem1(apiKey?, model?)` falls back to the SDK defaults (`TYPESAFE_DEFAULT_MODEL`, `TYPESAFE_BASE_URL`, then `jev-latest`). I'd pin a model in production so a model update can't quietly move your threshold.
 
 ## Does it actually work on real data?
@@ -91,10 +92,52 @@ A couple of caveats, so the numbers don't get over-read:
 
 <!-- results:start -->
 
-### Results
+### Results: `jev-1.14.0`
 
-No results yet. Running `bun run eval:report` after an eval fills this section in from the real report.
+2319 issues from denoland/deno, microsoft/TypeScript, microsoft/vscode, oven-sh/bun, react/react, rust-lang/rust, sveltejs/svelte, 0 errors. Stratified by label, so the mix below is not a real repo's mix.
+Always answering `bug` would score 29.7% on this sample.
+
+#### Threshold sweep
+
+| minConfidence | Jev answers | escalated | Jev accuracy on what it keeps |
+| ------------- | ----------- | --------- | ----------------------------- |
+| 0             | 2319        | 0.0%      | 76.7%                         |
+| 0.5           | 2204        | 5.0%      | 78.6%                         |
+| 0.6           | 2141        | 7.7%      | 79.5%                         |
+| 0.7           | 2066        | 10.9%     | 80.6%                         |
+| 0.8           | 1964        | 15.3%     | 81.9%                         |
+| 0.85          | 1904        | 17.9%     | 82.8%                         |
+| 0.9           | 1794        | 22.6%     | 84.3%                         |
+| 0.95          | 1689        | 27.2%     | 85.2%                         |
+
+#### Per label at minConfidence 0.8
+
+| label    | issues | escalated | Jev accuracy on what it keeps |
+| -------- | ------ | --------- | ----------------------------- |
+| bug      | 688    | 5.2%      | 98.2%                         |
+| docs     | 422    | 15.2%     | 81.6%                         |
+| feature  | 788    | 15.4%     | 87.3%                         |
+| question | 421    | 31.8%     | 33.1%                         |
+
+#### Calibration
+
+| confidence | issues | mean confidence | accuracy |
+| ---------- | ------ | --------------- | -------- |
+| 0–0.5      | 115    | 39.6%           | 39.1%    |
+| 0.5–0.6    | 63     | 55.0%           | 49.2%    |
+| 0.6–0.7    | 75     | 64.8%           | 49.3%    |
+| 0.7–0.8    | 102    | 74.4%           | 54.9%    |
+| 0.8–0.9    | 170    | 85.6%           | 57.1%    |
+| 0.9–1      | 1794   | 98.9%           | 84.3%    |
+
+Full report: [`eval/results/jev-1.14.0.md`](eval/results/jev-1.14.0.md)
 <!-- results:end -->
+
+### What I took from it
+
+Jev's really solid on bugs (98.2% right on the ones it keeps at 0.8), but `question` drags everything down. Most of the confident misses are issues maintainers labeled `question` that Jev called `bug`: 117 of the 282 wrong answers at 0.9+. I think that's partly the label itself... maintainers often relabel a bug report as a question after deciding it's working as intended, so the label reflects how the issue got resolved, not what the text says. Without `question`, Jev at 0.8 keeps 88.4% of issues and gets 90.3% of those right.
+
+Calibration is the more interesting part. Below 0.5 Jev's confidence lines up with its accuracy, but the 0.9+ bucket averages 98.9% confidence and lands at 84.3%. So raising `minConfidence` doesn't buy much here: going from 0.8 to 0.95 escalates 12 points more of the traffic for about 3 points of accuracy. On data like this, I'd fix the label set before I'd tune the threshold.
 
 ## Run it
 
