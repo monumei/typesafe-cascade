@@ -2,7 +2,9 @@
 
 [![ci](https://github.com/monumei/typesafe-cascade/actions/workflows/ci.yml/badge.svg)](https://github.com/monumei/typesafe-cascade/actions/workflows/ci.yml)
 
-A small TypeScript module that puts [TypeSafe](https://typesafe.ai)'s Jev in front of a reasoning model. Jev answers a typed `choice` question with a label, a confidence, and a probability for every label. If the confidence clears your threshold, you take Jev's answer. If it doesn't, or Jev errors or misses its deadline, the cascade hands the request to your System 2 (an LLM, a rules engine, a human queue) along with Jev's attempt.
+It's easy to send every classification straight to a big reasoning model, even when the answer is obvious. I wanted to try the other way around: ask [TypeSafe](https://typesafe.ai)'s Jev first, since it gives back a label plus a probability for every label, and only call the expensive model when Jev isn't sure.
+
+So that's what this is. Jev answers a typed `choice` question. If its confidence clears your threshold, you take its answer. If it doesn't, or Jev errors or misses the deadline, the request goes to your System 2 (an LLM, a rules engine, or a human queue) together with Jev's attempt.
 
 ```mermaid
 flowchart LR
@@ -47,32 +49,52 @@ const result = await triage.classify({
 // result.system1Details    -> Jev's label and per-label probabilities, when Jev answered
 ```
 
-`TChoice` comes from the keys of `criteria`, so a typo in a label fails at compile time. Both providers also get checked at runtime: a System 1 label outside `criteria`, or a confidence outside 0..1, counts as a System 1 error and escalates. A System 2 label outside `criteria` throws, since nothing sits behind System 2 to catch it.
+The label type comes from the keys of `criteria`, so a typo in a label fails at compile time. I also check both sides at runtime, because a model can still hand back something you didn't ask for. If Jev returns a label outside `criteria` or a confidence outside 0..1, I treat it as a System 1 error and escalate. If System 2 returns a bad label, `classify` throws, since nothing sits behind System 2 to catch it.
 
-## Behavior worth knowing
+## A few things worth knowing
 
-- System 1 gets one shot per request. `createTypeSafeSystem1` turns off SDK retries because escalation to System 2 already covers that failure.
-- On timeout the cascade aborts System 1's `AbortSignal`, so the in-flight Jev request gets cancelled instead of left running.
-- If System 2 throws, `classify` rejects with that error. The cascade won't loop back and call System 2 a second time.
-- `confidence` on the result always reports System 1's number, and it reads `0` when System 1 never answered. System 2 doesn't report a confidence.
-- `createTypeSafeSystem1(apiKey?, model?)` uses the SDK's defaults for model and base URL (`TYPESAFE_DEFAULT_MODEL`, `TYPESAFE_BASE_URL`, then `jev-latest`). Pin a model in production so a model update can't move your threshold under you.
+- Jev gets one shot per request. `createTypeSafeSystem1` turns off SDK retries, since escalating to System 2 already covers that failure.
+- On timeout I abort System 1's `AbortSignal`, so the in-flight Jev request actually gets cancelled instead of left running.
+- If System 2 throws, `classify` rejects with that error. It won't loop back and call System 2 again.
+- `confidence` on the result is always Jev's number, and it's `0` when Jev never answered. System 2 doesn't report one.
+- `createTypeSafeSystem1(apiKey?, model?)` falls back to the SDK defaults (`TYPESAFE_DEFAULT_MODEL`, `TYPESAFE_BASE_URL`, then `jev-latest`). I'd pin a model in production so a model update can't quietly move your threshold.
 
-## Picking `minConfidence`
+## Does it actually work on real data?
 
-The right threshold depends on your labels and your data, so this repo ships no default savings or accuracy figures. To choose one, run Jev over a labeled sample, keep `system1Details.probabilities` and the true label, and plot System 1 accuracy and escalation rate against the threshold. Pick the point where System 1's error rate on the requests it keeps matches what your queue can tolerate.
+That's the part I wanted to measure instead of guess, so I'm not putting savings numbers here until the eval says something.
+
+The test case is GitHub issue triage: given an issue's title and body, is it a `bug`, `feature`, `docs`, or `question`? Maintainers of big repos already label these by hand, which gives me free ground truth. `eval/data/issues.jsonl` has 2,319 closed and open issues from React, TypeScript, VS Code, Svelte, Rust, Bun, and Deno, each with exactly one human-applied type label (688 bug, 788 feature, 422 docs, 421 question). Issues with no type label, or with conflicting ones, are left out since there's no single right answer to score against.
+
+```bash
+bun run eval:fetch             # refresh the snapshot with gh (100 issues per label per repo)
+TYPESAFE_API_KEY=... bun run eval:run 20   # smoke test on 20 issues
+TYPESAFE_API_KEY=... bun run eval:run      # the rest; answers are cached, so reruns don't pay twice
+bun run eval:report            # writes eval/results.md
+```
+
+The report has three tables:
+
+- **Threshold sweep:** for each `minConfidence`, how many issues Jev keeps, how many escalate, and how accurate Jev is on the ones it keeps.
+- **Per label:** the same thing split by label, because a good average can hide a weak class.
+- **Calibration:** whether issues Jev marks around 0.9 are actually right around 90% of the time. This is what makes the cascade worth it in the first place.
+
+A couple of caveats, so the numbers don't get over-read:
+
+- The sample is balanced across labels on purpose. A real repo is mostly bugs (about 88% of recent labeled Bun and Deno issues), so the report also prints what "always answer bug" would score.
+- These repos use issue templates, so Jev sees the same structure a real triage bot would. That probably makes bug vs. feature easier than free-form text.
 
 ## Run it
 
-Requires [Bun](https://bun.sh) 1.4.
+Needs [Bun](https://bun.sh) 1.4.
 
 ```bash
 bun install
-bun test            # 8 tests: thresholds, timeout, provider errors, label validation
+bun test            # cascade behavior plus the eval metrics
 bun run typecheck   # bun check
-bun start           # ticket triage demo
+bun start           # support-ticket demo
 ```
 
-Without `TYPESAFE_API_KEY`, the demo uses a keyword stand-in for Jev and a stub System 2, and the latencies it prints come from `Bun.sleep`. Set the key to send the System 1 calls to Jev:
+Without `TYPESAFE_API_KEY`, the demo uses a keyword stand-in for Jev and a stub System 2, and the latencies it prints are just `Bun.sleep`. Set the key to send the System 1 calls to Jev:
 
 ```bash
 TYPESAFE_API_KEY=... bun start
@@ -80,10 +102,11 @@ TYPESAFE_API_KEY=... bun start
 
 ## Layout
 
-- `src/cascade.ts` holds `CascadeClassifier` and the Jev provider `createTypeSafeSystem1`.
-- `src/types.ts` defines the provider and result types.
-- `src/demo.ts` runs support-ticket triage with four tickets: three clear, one ambiguous.
-- `test/cascade.test.ts` covers the escalation paths with mock providers.
+- `src/cascade.ts` has `CascadeClassifier` and the Jev provider, `createTypeSafeSystem1`.
+- `src/types.ts` has the provider and result types.
+- `src/demo.ts` runs support-ticket triage on four tickets, three clear and one ambiguous.
+- `eval/` fetches labeled issues, runs Jev over them, and builds the report.
+- `test/` covers the escalation paths with mock providers, plus the eval metrics.
 
 ## License
 

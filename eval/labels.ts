@@ -13,6 +13,33 @@ export const instructions =
   "Triage this GitHub issue: which kind of issue is it?";
 
 export const repoLabels: Record<string, Record<string, IssueLabel>> = {
+  "react/react": {
+    "Type: Bug": "bug",
+    "Type: Feature Request": "feature",
+    "Type: Enhancement": "feature",
+    "Type: Question": "question",
+  },
+  "microsoft/TypeScript": {
+    Bug: "bug",
+    Suggestion: "feature",
+    Docs: "docs",
+    Question: "question",
+  },
+  "microsoft/vscode": {
+    bug: "bug",
+    "feature-request": "feature",
+    "*question": "question",
+  },
+  "sveltejs/svelte": {
+    bug: "bug",
+    "feature request": "feature",
+    documentation: "docs",
+  },
+  "rust-lang/rust": {
+    "C-bug": "bug",
+    "C-feature-request": "feature",
+    "A-docs": "docs",
+  },
   "oven-sh/bun": {
     bug: "bug",
     enhancement: "feature",
