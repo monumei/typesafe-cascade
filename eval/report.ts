@@ -1,8 +1,9 @@
+import { model, reportPath, resultsPath } from "./labels";
 import type { JevRecord } from "./metrics";
 import { calibration, perLabel, sweep } from "./metrics";
 
 const threshold = Number(process.argv[2] ?? 0.8);
-const records = (await Bun.file("eval/data/jev.jsonl").text())
+const records = (await Bun.file(resultsPath).text())
   .split("\n")
   .filter(Boolean)
   .map((l) => JSON.parse(l) as JevRecord);
@@ -13,7 +14,7 @@ const bugShare =
   records.filter((r) => r.label === "bug").length / records.length;
 
 const lines = [
-  "# Jev issue-triage eval",
+  `# Jev issue-triage eval: ${model}`,
   "",
   `${records.length} issues from ${[...new Set(records.map((r) => r.repo))].join(", ")}, ${errors} errors. Stratified by label, so the mix below is not a real repo's mix.`,
   `Always answering \`bug\` would score ${pct(bugShare)} on this sample.`,
@@ -47,5 +48,5 @@ const lines = [
   "",
 ];
 
-await Bun.write("eval/results.md", lines.join("\n"));
+await Bun.write(reportPath, lines.join("\n"));
 console.log(lines.join("\n"));

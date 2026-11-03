@@ -1,10 +1,16 @@
+import { $ } from "bun";
 import { createTypeSafeSystem1 } from "../src/cascade";
-import { criteria, instructions, type Issue, type IssueLabel } from "./labels";
+import { issuesPath } from "./fetch";
+import {
+  criteria,
+  instructions,
+  model,
+  resultsPath,
+  type Issue,
+  type IssueLabel,
+} from "./labels";
 import type { JevRecord } from "./metrics";
 
-const issuesPath = "eval/data/issues.jsonl";
-const resultsPath = "eval/data/jev.jsonl";
-const model = process.env.TYPESAFE_DEFAULT_MODEL ?? "jev-latest";
 const concurrency = 8;
 const limit = Number(process.argv[2] ?? Infinity);
 
@@ -18,6 +24,7 @@ const readJsonl = async <T>(path: string): Promise<T[]> => {
 };
 
 const key = (r: { repo: string; number: number }) => `${r.repo}#${r.number}`;
+if (!(await Bun.file(issuesPath).exists())) await $`bun eval/fetch.ts`;
 const issues = await readJsonl<Issue>(issuesPath);
 // Cached errors are retried; cached answers are not, so reruns never pay twice.
 const prior = (await readJsonl<JevRecord>(resultsPath)).filter(

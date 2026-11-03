@@ -63,14 +63,20 @@ The label type comes from the keys of `criteria`, so a typo in a label fails at 
 
 That's the part I wanted to measure instead of guess, so I'm not putting savings numbers here until the eval says something.
 
-The test case is GitHub issue triage: given an issue's title and body, is it a `bug`, `feature`, `docs`, or `question`? Maintainers of big repos already label these by hand, which gives me free ground truth. `eval/data/issues.jsonl` has 2,319 closed and open issues from React, TypeScript, VS Code, Svelte, Rust, Bun, and Deno, each with exactly one human-applied type label (688 bug, 788 feature, 422 docs, 421 question). Issues with no type label, or with conflicting ones, are left out since there's no single right answer to score against.
+The test case is GitHub issue triage: given an issue's title and body, is it a `bug`, `feature`, `docs`, or `question`? Maintainers of big repos already label these by hand, which gives me free ground truth. `eval/manifest.jsonl` pins 2,319 closed and open issues from React, TypeScript, VS Code, Svelte, Rust, Bun, and Deno, each with exactly one human-applied type label (688 bug, 788 feature, 422 docs, 421 question). Issues with no type label, or with conflicting ones, are left out since there's no single right answer to score against.
+
+The manifest only holds the repo, issue number, and the label at snapshot time, so the ground truth stays put even if maintainers relabel later. The issue text isn't in git. `eval:run` pulls titles and bodies from GitHub through `gh` the first time it needs them (about a minute), into the gitignored `eval/data/`.
 
 ```bash
-bun run eval:fetch             # refresh the snapshot with gh (100 issues per label per repo)
 TYPESAFE_API_KEY=... bun run eval:run 20   # smoke test on 20 issues
 TYPESAFE_API_KEY=... bun run eval:run      # the rest; answers are cached, so reruns don't pay twice
-bun run eval:report            # writes eval/results.md
+bun run eval:report            # writes eval/results/<model>.md
+
+bun run eval:fetch             # re-download issue text for the pinned manifest
+bun run eval:sample            # resample a new manifest (100 issues per label per repo)
 ```
+
+Answers and reports are kept per model, so you can set `TYPESAFE_DEFAULT_MODEL=jev-1.14.0` (or whatever's next), rerun, and diff two Jev versions on the same 2,319 issues. I'd pin a version rather than use `jev-latest` here, since `latest` moves.
 
 The report has three tables:
 

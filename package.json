@@ -17,7 +17,8 @@
     "typecheck": "bun check",
     "eval:fetch": "bun eval/fetch.ts",
     "eval:run": "bun eval/run.ts",
-    "eval:report": "bun eval/report.ts"
+    "eval:report": "bun eval/report.ts",
+    "eval:sample": "bun eval/fetch.ts --refresh"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "^0.7.0"

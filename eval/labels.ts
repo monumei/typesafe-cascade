@@ -61,3 +61,8 @@ export interface Issue {
   title: string;
   body: string;
 }
+
+// Pin a version (e.g. TYPESAFE_DEFAULT_MODEL=jev-1.14.0) to compare models; caches and reports are per model.
+export const model = process.env.TYPESAFE_DEFAULT_MODEL ?? "jev-latest";
+export const resultsPath = `eval/data/jev-${model}.jsonl`;
+export const reportPath = `eval/results/${model}.md`;
