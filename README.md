@@ -18,7 +18,8 @@ flowchart LR
 ```ts
 import { CascadeClassifier } from "./src";
 
-type Queue = "refund_request" | "account_security" | "bug_report" | "general_inquiry";
+type Queue =
+  "refund_request" | "account_security" | "bug_report" | "general_inquiry";
 
 const triage = new CascadeClassifier<Queue>({
   instructions: "Route this support ticket to the right queue.",
@@ -37,7 +38,9 @@ const triage = new CascadeClassifier<Queue>({
   },
 });
 
-const result = await triage.classify({ message: "The app crashed at checkout. Was I charged?" });
+const result = await triage.classify({
+  message: "The app crashed at checkout. Was I charged?",
+});
 // result.choice            -> one of Queue
 // result.resolvedBy        -> "system-1" | "system-2"
 // result.escalationReason  -> "low-confidence" | "system1-error" | "timeout" | undefined
