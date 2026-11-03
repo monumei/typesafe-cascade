@@ -14,7 +14,10 @@
   "scripts": {
     "start": "bun run src/demo.ts",
     "test": "bun test",
-    "typecheck": "bun check"
+    "typecheck": "bun check",
+    "eval:fetch": "bun eval/fetch.ts",
+    "eval:run": "bun eval/run.ts",
+    "eval:report": "bun eval/report.ts"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "^0.7.0"
