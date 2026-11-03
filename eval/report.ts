@@ -46,6 +46,17 @@ const lines = [
       `| ${b.range[0]}–${b.range[1]} | ${b.n} | ${pct(b.meanConfidence)} | ${pct(b.accuracy)} |`,
   ),
   "",
+  "## Calibration without `question`",
+  "",
+  "`question` is the noisiest label (maintainers often relabel a bug report as a question once it's working as intended), so this checks whether the overconfidence is just that label.",
+  "",
+  "| confidence | issues | mean confidence | accuracy |",
+  "|---|---|---|---|",
+  ...calibration(records.filter((r) => r.label !== "question")).map(
+    (b) =>
+      `| ${b.range[0]}–${b.range[1]} | ${b.n} | ${pct(b.meanConfidence)} | ${pct(b.accuracy)} |`,
+  ),
+  "",
 ];
 
 await Bun.write(reportPath, lines.join("\n"));

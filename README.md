@@ -130,6 +130,19 @@ Always answering `bug` would score 29.7% on this sample.
 | 0.8–0.9    | 170    | 85.6%           | 57.1%    |
 | 0.9–1      | 1794   | 98.9%           | 84.3%    |
 
+#### Calibration without `question`
+
+`question` is the noisiest label (maintainers often relabel a bug report as a question once it's working as intended), so this checks whether the overconfidence is just that label.
+
+| confidence | issues | mean confidence | accuracy |
+| ---------- | ------ | --------------- | -------- |
+| 0–0.5      | 71     | 39.4%           | 43.7%    |
+| 0.5–0.6    | 40     | 55.0%           | 55.0%    |
+| 0.6–0.7    | 42     | 64.8%           | 54.8%    |
+| 0.7–0.8    | 68     | 74.1%           | 55.9%    |
+| 0.8–0.9    | 106    | 85.9%           | 68.9%    |
+| 0.9–1      | 1571   | 99.1%           | 91.7%    |
+
 Full report: [`eval/results/jev-1.14.0.md`](eval/results/jev-1.14.0.md)
 <!-- results:end -->
 
