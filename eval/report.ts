@@ -50,3 +50,21 @@ const lines = [
 
 await Bun.write(reportPath, lines.join("\n"));
 console.log(lines.join("\n"));
+
+// Mirror the latest report into the README so the repo page shows real numbers once someone runs the eval.
+const readme = await Bun.file("README.md").text();
+const start = "<!-- results:start -->";
+const end = "<!-- results:end -->";
+const section = [
+  start,
+  `### Results: \`${model}\``,
+  "",
+  ...lines.slice(2).map((l) => (l.startsWith("## ") ? `##${l}` : l)),
+  `Full report: [\`${reportPath}\`](${reportPath})`,
+  end,
+].join("\n");
+const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
+if (!pattern.test(readme))
+  throw new Error(`README.md is missing the ${start} marker`);
+await Bun.write("README.md", readme.replace(pattern, section));
+console.log(`\nUpdated README.md results for ${model}`);

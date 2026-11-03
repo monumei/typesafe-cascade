@@ -70,7 +70,7 @@ The manifest only holds the repo, issue number, and the label at snapshot time, 
 ```bash
 TYPESAFE_API_KEY=... bun run eval:run 20   # smoke test on 20 issues
 TYPESAFE_API_KEY=... bun run eval:run      # the rest; answers are cached, so reruns don't pay twice
-bun run eval:report            # writes eval/results/<model>.md
+bun run eval:report            # writes eval/results/<model>.md and the Results section below
 
 bun run eval:fetch             # re-download issue text for the pinned manifest
 bun run eval:sample            # resample a new manifest (100 issues per label per repo)
@@ -88,6 +88,13 @@ A couple of caveats, so the numbers don't get over-read:
 
 - The sample is balanced across labels on purpose. A real repo is mostly bugs (about 88% of recent labeled Bun and Deno issues), so the report also prints what "always answer bug" would score.
 - These repos use issue templates, so Jev sees the same structure a real triage bot would. That probably makes bug vs. feature easier than free-form text.
+
+<!-- results:start -->
+
+### Results
+
+No results yet. Running `bun run eval:report` after an eval fills this section in from the real report.
+<!-- results:end -->
 
 ## Run it
 
